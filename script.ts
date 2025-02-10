@@ -5,7 +5,7 @@ import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
 const sheetId = "1_BGSepevkTl0xade-TrJISX5Bp6r5tsBDy5_XY2umwc";
 const apiKey = "AIzaSyChiRwOLGsaXitE3ZrgM2qIoPpZm1cBjPs";
-const range = "Sheet1";
+const range = "BB_survey";
 
 const loader = new Loader({
   apiKey,
@@ -30,6 +30,8 @@ class BikeBus {
     public state: string,
     public zip: string,
     public country: string,
+    public lat: number,
+    public lng: number,
     public url: string
   ) {
     this.name = name;
@@ -39,6 +41,9 @@ class BikeBus {
     this.state = state;
     this.zip = zip;
     this.country = country;
+
+    this.lat = lat;
+    this.lng = lng;
 
     this.url = url;
   }
@@ -53,29 +58,41 @@ class BikeBus {
   }
 
   async geocode(geocoder: google.maps.Geocoder) {
+    // their geocoding isn't reliable
+    // if (this.lat && this.lng) {
+    //   const core = await loader.importLibrary("core");
+    //   return new core.LatLng(this.lat, this.lng);
+    // }
+
     const response = await geocoder.geocode({ address: this.location() });
     return response.results[0].geometry.location;
   }
 
   toHTML() {
-    return `
-      <p>${this.shortLocation()}</p>
-      <p>
-        <a href="${this.url}">${this.url}</a>
-      </p>
-    `;
+    if (this.url) {
+      return `
+        <p>${this.shortLocation()}</p>
+        <p>
+          <a href="${this.url}">${this.url}</a>
+        </p>
+      `;
+    }
+
+    return this.shortLocation();
   }
 
   static fromRow(headers: [string], row: [string]) {
     const rowObj = arrayToObj(headers, row);
 
     return new BikeBus(
-      rowObj["Name"],
+      rowObj["BB_Name"],
       rowObj["Street"],
       rowObj["City"],
       rowObj["State"],
       rowObj["ZIP"],
       rowObj["Country"],
+      parseFloat(rowObj["Latitude"]),
+      parseFloat(rowObj["Longitude"]),
       rowObj["URL"]
     );
   }
