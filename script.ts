@@ -19,6 +19,14 @@ class BikeBus {
     this.location = location;
     this.url = url;
   }
+
+  static fromRow(headers: [string], row: [string]) {
+    const nameIndex = headers.indexOf("Name");
+    const locationIndex = headers.indexOf("Combined");
+    const urlIndex = headers.indexOf("URL");
+
+    return new BikeBus(row[nameIndex], row[locationIndex], row[urlIndex]);
+  }
 }
 
 const createMap = async () => {
@@ -38,14 +46,6 @@ const createMap = async () => {
   });
 };
 
-const arrayToObj = (headers: [string], row: [string]) => {
-  const result = {};
-  headers.forEach((header, i) => {
-    result[header] = row[i];
-  });
-  return result;
-};
-
 const getSheetData = async () => {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
   const response = await fetch(url);
@@ -53,11 +53,9 @@ const getSheetData = async () => {
 
   const headers: [string] = data.values[0];
   const rows = data.values.slice(1);
-
-  const buses: [BikeBus] = rows.map((row: [string]) => {
-    const obj = arrayToObj(headers, row);
-    return new BikeBus(obj["Name"], obj["Combined"], obj["URL"]);
-  });
+  const buses: [BikeBus] = rows.map((row: [string]) =>
+    BikeBus.fromRow(headers, row)
+  );
 
   return buses;
 };
