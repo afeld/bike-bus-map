@@ -19,6 +19,9 @@ const arrayToObj = (headers: [string], row: [string]) => {
   return result;
 };
 
+// https://stackoverflow.com/a/2843625/358804
+const join = (parts: string[]) => parts.filter(Boolean).join(", ");
+
 class BikeBus {
   constructor(
     public name: string,
@@ -41,14 +44,12 @@ class BikeBus {
   }
 
   shortLocation() {
-    return `${this.city}, ${this.state}, ${this.country}`;
+    return join([this.city, this.state, this.country]);
   }
 
   // used for geocoding
   location() {
-    const parts = [this.street, this.city, this.state, this.zip, this.country];
-    // https://stackoverflow.com/a/2843625/358804
-    return parts.filter(Boolean).join(" ");
+    return join([this.street, this.city, this.state, this.zip, this.country]);
   }
 
   async geocode(geocoder: google.maps.Geocoder) {
