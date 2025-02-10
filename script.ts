@@ -26,10 +26,22 @@ const createMap = async () => {
   });
 };
 
+const arrayToObj = (headers: [string], row: [string]) => {
+  const result = {};
+  headers.forEach((header, i) => {
+    result[header] = row[i];
+  });
+  return result;
+};
+
 const getSheetData = async () => {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
   const response = await fetch(url);
-  return await response.json();
+  const data = await response.json();
+
+  const headers: [string] = data.values[0];
+  const rows = data.values.slice(1);
+  return rows.map((row: [string]) => arrayToObj(headers, row));
 };
 
 const addMarker = async (
@@ -54,7 +66,7 @@ const addMarker = async (
 };
 
 const run = async () => {
-  const [core, maps, geocoding, map, data] = await Promise.all([
+  const [core, maps, geocoding, map, rows] = await Promise.all([
     loader.importLibrary("core"),
     loader.importLibrary("maps"),
     loader.importLibrary("geocoding"),
@@ -66,24 +78,18 @@ const run = async () => {
   const infoWindow = new maps.InfoWindow();
   const geocoder = new geocoding.Geocoder();
 
-  const headers = data.values[0];
-  const titleIndex = headers.indexOf("Name");
-  const locIndex = headers.indexOf("Combined");
-  const urlIndex = headers.indexOf("URL");
-
-  const rows = data.values.slice(1);
   // wait for all markers to be added
   await Promise.all(
     rows.map(async (row: [string]) => {
-      const title = row[titleIndex];
-      const loc = row[locIndex];
+      const title = row["Name"];
+      const loc = row["Combined"];
       const marker = await addMarker(geocoder, map, bounds, loc, title);
 
       // https://developers.google.com/maps/documentation/javascript/advanced-markers/accessible-markers#make_a_marker_clickable
       marker.addListener("click", () => {
         infoWindow.close();
 
-        const url = row[urlIndex];
+        const url = row["URL"];
         infoWindow.setContent(`<h3>${title}</h3><a href="${url}">${url}</a>`);
 
         infoWindow.open(marker.map, marker);
