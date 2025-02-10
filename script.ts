@@ -9,6 +9,18 @@ const loader = new Loader({
   apiKey,
 });
 
+class BikeBus {
+  constructor(
+    public name: string,
+    public location: string,
+    public url: string
+  ) {
+    this.name = name;
+    this.location = location;
+    this.url = url;
+  }
+}
+
 const createMap = async () => {
   const { Map } = await loader.importLibrary("maps");
 
@@ -41,32 +53,51 @@ const getSheetData = async () => {
 
   const headers: [string] = data.values[0];
   const rows = data.values.slice(1);
-  return rows.map((row: [string]) => arrayToObj(headers, row));
+
+  const buses: [BikeBus] = rows.map((row: [string]) => {
+    const obj = arrayToObj(headers, row);
+    return new BikeBus(obj["Name"], obj["Combined"], obj["URL"]);
+  });
+
+  return buses;
 };
 
 const addMarker = async (
   geocoder: google.maps.Geocoder,
   map: google.maps.Map,
   bounds: google.maps.LatLngBounds,
-  address: string,
-  title: string
+  infoWindow: google.maps.InfoWindow,
+  bus: BikeBus
 ) => {
-  const response = await geocoder.geocode({ address });
+  const response = await geocoder.geocode({ address: bus.location });
   const position = response.results[0].geometry.location;
   bounds.extend(position);
 
   const { AdvancedMarkerElement } = await loader.importLibrary("marker");
 
-  return new AdvancedMarkerElement({
+  const title = bus.name;
+  const marker = new AdvancedMarkerElement({
     map,
     position,
     title,
     gmpClickable: true,
   });
+
+  // https://developers.google.com/maps/documentation/javascript/advanced-markers/accessible-markers#make_a_marker_clickable
+  marker.addListener("click", () => {
+    infoWindow.close();
+
+    const url = bus.url;
+    infoWindow.setContent(`<h3>${title}</h3><a href="${url}">${url}</a>`);
+
+    infoWindow.open(map, marker);
+  });
+
+  return marker;
 };
 
 const run = async () => {
-  const [core, maps, geocoding, map, rows] = await Promise.all([
+  const [core, maps, geocoding, map, buses] = await Promise.all([
     loader.importLibrary("core"),
     loader.importLibrary("maps"),
     loader.importLibrary("geocoding"),
@@ -80,21 +111,7 @@ const run = async () => {
 
   // wait for all markers to be added
   await Promise.all(
-    rows.map(async (row: [string]) => {
-      const title = row["Name"];
-      const loc = row["Combined"];
-      const marker = await addMarker(geocoder, map, bounds, loc, title);
-
-      // https://developers.google.com/maps/documentation/javascript/advanced-markers/accessible-markers#make_a_marker_clickable
-      marker.addListener("click", () => {
-        infoWindow.close();
-
-        const url = row["URL"];
-        infoWindow.setContent(`<h3>${title}</h3><a href="${url}">${url}</a>`);
-
-        infoWindow.open(marker.map, marker);
-      });
-    })
+    buses.map((bus) => addMarker(geocoder, map, bounds, infoWindow, bus))
   );
 
   // automatically center the map
