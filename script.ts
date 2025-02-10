@@ -51,11 +51,10 @@ const getSheetData = async () => {
   const response = await fetch(url);
   const data = await response.json();
 
-  const headers: [string] = data.values[0];
-  const rows = data.values.slice(1);
-  const buses: [BikeBus] = rows.map((row: [string]) =>
-    BikeBus.fromRow(headers, row)
-  );
+  const values: [string][] = data.values;
+  const headers = values[0];
+  const rows = values.slice(1);
+  const buses = rows.map((row) => BikeBus.fromRow(headers, row));
 
   return buses;
 };
