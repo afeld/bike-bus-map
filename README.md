@@ -5,5 +5,6 @@
 Proof of concept.
 
 ```sh
-npx start
+npm install
+npm start
 ```
