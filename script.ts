@@ -44,10 +44,16 @@ class BikeBus {
     return `${this.city}, ${this.state}, ${this.country}`;
   }
 
+  // used for geocoding
   location() {
     const parts = [this.street, this.city, this.state, this.zip, this.country];
     // https://stackoverflow.com/a/2843625/358804
     return parts.filter(Boolean).join(" ");
+  }
+
+  async geocode(geocoder: google.maps.Geocoder) {
+    const response = await geocoder.geocode({ address: this.location() });
+    return response.results[0].geometry.location;
   }
 
   static fromRow(headers: [string], row: [string]) {
@@ -102,8 +108,7 @@ const addMarker = async (
   infoWindow: google.maps.InfoWindow,
   bus: BikeBus
 ) => {
-  const response = await geocoder.geocode({ address: bus.location() });
-  const position = response.results[0].geometry.location;
+  const position = await bus.geocode(geocoder);
   bounds.extend(position);
 
   const { AdvancedMarkerElement } = await loader.importLibrary("marker");
