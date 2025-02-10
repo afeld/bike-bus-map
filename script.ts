@@ -56,6 +56,16 @@ class BikeBus {
     return response.results[0].geometry.location;
   }
 
+  toHTML() {
+    return `
+      <h3>${this.name}</h3>
+      <p>${this.shortLocation()}</p>
+      <p>
+        <a href="${this.url}">${this.url}</a>
+      </p>
+    `;
+  }
+
   static fromRow(headers: [string], row: [string]) {
     const rowObj = arrayToObj(headers, row);
 
@@ -113,27 +123,17 @@ const addMarker = async (
 
   const { AdvancedMarkerElement } = await loader.importLibrary("marker");
 
-  const title = bus.name;
   const marker = new AdvancedMarkerElement({
     map,
     position,
-    title,
+    title: bus.name,
     gmpClickable: true,
   });
 
   // https://developers.google.com/maps/documentation/javascript/advanced-markers/accessible-markers#make_a_marker_clickable
   marker.addListener("click", () => {
     infoWindow.close();
-
-    const url = bus.url;
-    infoWindow.setContent(`
-      <h3>${title}</h3>
-      <p>${bus.shortLocation()}</p>
-      <p>
-        <a href="${url}">${url}</a>
-      </p>
-    `);
-
+    infoWindow.setContent(bus.toHTML());
     infoWindow.open(map, marker);
   });
 
