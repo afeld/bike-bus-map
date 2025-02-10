@@ -45,22 +45,25 @@ const addMarker = async (
 
   const { AdvancedMarkerElement } = await loader.importLibrary("marker");
 
-  new AdvancedMarkerElement({
+  return new AdvancedMarkerElement({
     map,
     position,
     title,
+    gmpClickable: true,
   });
 };
 
 const run = async () => {
-  const [googleMaps, geocoding, map, data] = await Promise.all([
+  const [core, maps, geocoding, map, data] = await Promise.all([
     loader.importLibrary("core"),
+    loader.importLibrary("maps"),
     loader.importLibrary("geocoding"),
     createMap(),
     getSheetData(),
   ]);
 
-  const bounds = new googleMaps.LatLngBounds();
+  const bounds = new core.LatLngBounds();
+  const infoWindow = new maps.InfoWindow();
   const geocoder = new geocoding.Geocoder();
 
   const headers = data.values[0];
@@ -69,13 +72,23 @@ const run = async () => {
 
   const rows = data.values.slice(1);
   // wait for all markers to be added
-  await Promise.all(
+  const markers = await Promise.all(
     rows.map((row: [string]) => {
+      console.log(row);
       const title = row[titleIndex];
       const loc = row[locIndex];
       return addMarker(geocoder, map, bounds, loc, title);
     })
   );
+
+  markers.forEach((marker) => {
+    // https://developers.google.com/maps/documentation/javascript/advanced-markers/accessible-markers#make_a_marker_clickable
+    marker.addListener("click", () => {
+      infoWindow.close();
+      infoWindow.setContent(marker.title);
+      infoWindow.open(marker.map, marker);
+    });
+  });
 
   // automatically center the map
   map.fitBounds(bounds);
