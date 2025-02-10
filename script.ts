@@ -22,28 +22,46 @@ const arrayToObj = (headers: [string], row: [string]) => {
 class BikeBus {
   constructor(
     public name: string,
-    public location: string,
+    public street: string,
+    public city: string,
+    public state: string,
+    public zip: string,
+    public country: string,
     public url: string
   ) {
     this.name = name;
-    this.location = location;
+
+    this.street = street;
+    this.city = city;
+    this.state = state;
+    this.zip = zip;
+    this.country = country;
+
     this.url = url;
+  }
+
+  shortLocation() {
+    return `${this.city}, ${this.state}, ${this.country}`;
+  }
+
+  location() {
+    const parts = [this.street, this.city, this.state, this.zip, this.country];
+    // https://stackoverflow.com/a/2843625/358804
+    return parts.filter(Boolean).join(" ");
   }
 
   static fromRow(headers: [string], row: [string]) {
     const rowObj = arrayToObj(headers, row);
 
-    const locParts = [
+    return new BikeBus(
+      rowObj["Name"],
       rowObj["Street"],
       rowObj["City"],
       rowObj["State"],
       rowObj["ZIP"],
       rowObj["Country"],
-    ];
-    // https://stackoverflow.com/a/2843625/358804
-    const loc = locParts.filter(Boolean).join(" ");
-
-    return new BikeBus(rowObj["Name"], loc, rowObj["URL"]);
+      rowObj["URL"]
+    );
   }
 }
 
@@ -84,7 +102,7 @@ const addMarker = async (
   infoWindow: google.maps.InfoWindow,
   bus: BikeBus
 ) => {
-  const response = await geocoder.geocode({ address: bus.location });
+  const response = await geocoder.geocode({ address: bus.location() });
   const position = response.results[0].geometry.location;
   bounds.extend(position);
 
@@ -103,7 +121,13 @@ const addMarker = async (
     infoWindow.close();
 
     const url = bus.url;
-    infoWindow.setContent(`<h3>${title}</h3><a href="${url}">${url}</a>`);
+    infoWindow.setContent(`
+      <h3>${title}</h3>
+      <p>${bus.shortLocation()}</p>
+      <p>
+        <a href="${url}">${url}</a>
+      </p>
+    `);
 
     infoWindow.open(map, marker);
   });
