@@ -37,23 +37,25 @@ const addMarker = async (
   title: string
 ) => {
   const response = await geocoder.geocode({ address });
+  const position = response.results[0].geometry.location;
 
   const { AdvancedMarkerElement } = await loader.importLibrary("marker");
 
   return new AdvancedMarkerElement({
     map,
-    position: response.results[0].geometry.location,
+    position,
     title,
   });
 };
 
 const run = async () => {
-  const { Geocoder } = await loader.importLibrary("geocoding");
-  const geocoder = new Geocoder();
+  const [map, geocoding, data] = await Promise.all([
+    createMap(),
+    loader.importLibrary("geocoding"),
+    getSheetData(),
+  ]);
 
-  const map = await createMap();
-
-  const data = await getSheetData();
+  const geocoder = new geocoding.Geocoder();
 
   const headers = data.values[0];
   const titleIndex = headers.indexOf("Name");
