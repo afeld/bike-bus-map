@@ -21,6 +21,8 @@ const createMap = async () => {
     center: { lat: 0, lng: 0 },
     zoom: 2,
     mapId: "DEMO_MAP_ID",
+    // gestureHandling: "cooperative",
+    maxZoom: 13,
   });
 };
 
@@ -33,15 +35,17 @@ const getSheetData = async () => {
 const addMarker = async (
   geocoder: google.maps.Geocoder,
   map: google.maps.Map,
+  bounds: google.maps.LatLngBounds,
   address: string,
   title: string
 ) => {
   const response = await geocoder.geocode({ address });
   const position = response.results[0].geometry.location;
+  bounds.extend(position);
 
   const { AdvancedMarkerElement } = await loader.importLibrary("marker");
 
-  return new AdvancedMarkerElement({
+  new AdvancedMarkerElement({
     map,
     position,
     title,
@@ -49,12 +53,14 @@ const addMarker = async (
 };
 
 const run = async () => {
-  const [map, geocoding, data] = await Promise.all([
-    createMap(),
+  const [googleMaps, geocoding, map, data] = await Promise.all([
+    loader.importLibrary("core"),
     loader.importLibrary("geocoding"),
+    createMap(),
     getSheetData(),
   ]);
 
+  const bounds = new googleMaps.LatLngBounds();
   const geocoder = new geocoding.Geocoder();
 
   const headers = data.values[0];
@@ -62,11 +68,17 @@ const run = async () => {
   const locIndex = headers.indexOf("Combined");
 
   const rows = data.values.slice(1);
-  rows.forEach((row: [string]) => {
-    const title = row[titleIndex];
-    const loc = row[locIndex];
-    addMarker(geocoder, map, loc, title);
-  });
+  // wait for all markers to be added
+  await Promise.all(
+    rows.map((row: [string]) => {
+      const title = row[titleIndex];
+      const loc = row[locIndex];
+      return addMarker(geocoder, map, bounds, loc, title);
+    })
+  );
+
+  // automatically center the map
+  map.fitBounds(bounds);
 };
 
 window.addEventListener("load", run);
