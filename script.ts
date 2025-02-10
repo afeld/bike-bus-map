@@ -112,6 +112,8 @@ const createMap = async () => {
     mapId: "DEMO_MAP_ID",
     // gestureHandling: "cooperative",
     maxZoom: 13,
+    streetViewControl: false,
+    mapTypeControl: false,
   });
 };
 
