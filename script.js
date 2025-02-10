@@ -36,11 +36,17 @@ const addMarker = async (map, address, title) => {
 const run = async () => {
   const data = await getSheetData();
   const headers = data.values[0];
+  const titleIndex = headers.indexOf("Name");
+  const locIndex = headers.indexOf("Combined");
 
   const map = await createMap();
-  console.log(data);
 
-  addMarker(map, "New York, NY", "New York");
+  const rows = data.values.slice(1);
+  rows.forEach((row) => {
+    const title = row[titleIndex];
+    const loc = row[locIndex];
+    addMarker(map, loc, title);
+  });
 };
 
 window.addEventListener("load", run);
