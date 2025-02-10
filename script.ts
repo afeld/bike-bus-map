@@ -9,6 +9,14 @@ const loader = new Loader({
   apiKey,
 });
 
+const arrayToObj = (headers: [string], row: [string]) => {
+  const result = {};
+  headers.forEach((header, i) => {
+    result[header] = row[i];
+  });
+  return result;
+};
+
 class BikeBus {
   constructor(
     public name: string,
@@ -21,11 +29,19 @@ class BikeBus {
   }
 
   static fromRow(headers: [string], row: [string]) {
-    const nameIndex = headers.indexOf("Name");
-    const locationIndex = headers.indexOf("Combined");
-    const urlIndex = headers.indexOf("URL");
+    const rowObj = arrayToObj(headers, row);
 
-    return new BikeBus(row[nameIndex], row[locationIndex], row[urlIndex]);
+    const locParts = [
+      rowObj["Street"],
+      rowObj["City"],
+      rowObj["State"],
+      rowObj["ZIP"],
+      rowObj["Country"],
+    ];
+    // https://stackoverflow.com/a/2843625/358804
+    const loc = locParts.filter(Boolean).join(" ");
+
+    return new BikeBus(rowObj["Name"], loc, rowObj["URL"]);
   }
 }
 
