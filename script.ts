@@ -1,5 +1,7 @@
 // https://developers.google.com/maps/documentation/javascript/load-maps-js-api#js-api-loader
 import { Loader } from "@googlemaps/js-api-loader";
+// https://developers.google.com/maps/documentation/javascript/marker-clustering
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
 const sheetId = "1_BGSepevkTl0xade-TrJISX5Bp6r5tsBDy5_XY2umwc";
 const apiKey = "AIzaSyChiRwOLGsaXitE3ZrgM2qIoPpZm1cBjPs";
@@ -123,12 +125,13 @@ const run = async () => {
   const geocoder = new geocoding.Geocoder();
 
   // wait for all markers to be added
-  await Promise.all(
+  const markers = await Promise.all(
     buses.map((bus) => addMarker(geocoder, map, bounds, infoWindow, bus))
   );
 
   // automatically center the map
   map.fitBounds(bounds);
+  new MarkerClusterer({ markers, map });
 };
 
 window.addEventListener("load", run);

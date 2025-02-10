@@ -11,6 +11,7 @@
     "parcel": "^2.13.3"
   },
   "dependencies": {
-    "@googlemaps/js-api-loader": "^1.16.8"
+    "@googlemaps/js-api-loader": "^1.16.8",
+    "@googlemaps/markerclusterer": "^2.5.3"
   }
 }
