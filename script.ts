@@ -58,7 +58,6 @@ class BikeBus {
 
   toHTML() {
     return `
-      <h3>${this.name}</h3>
       <p>${this.shortLocation()}</p>
       <p>
         <a href="${this.url}">${this.url}</a>
@@ -133,7 +132,12 @@ const addMarker = async (
   // https://developers.google.com/maps/documentation/javascript/advanced-markers/accessible-markers#make_a_marker_clickable
   marker.addListener("click", () => {
     infoWindow.close();
+
+    const header = document.createElement("h3");
+    header.textContent = bus.name;
+    infoWindow.setHeaderContent(header);
     infoWindow.setContent(bus.toHTML());
+
     infoWindow.open(map, marker);
   });
 
