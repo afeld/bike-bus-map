@@ -7,6 +7,7 @@
     "build": "parcel build"
   },
   "devDependencies": {
+    "@types/google.maps": "^3.58.1",
     "parcel": "^2.13.3"
   },
   "dependencies": {

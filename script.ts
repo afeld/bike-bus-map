@@ -13,6 +13,10 @@ const createMap = async () => {
   const { Map } = await loader.importLibrary("maps");
 
   const mapEl = document.getElementById("map");
+  if (!mapEl) {
+    throw new Error("Map element not found");
+  }
+
   return new Map(mapEl, {
     center: { lat: 0, lng: 0 },
     zoom: 2,
@@ -26,7 +30,12 @@ const getSheetData = async () => {
   return await response.json();
 };
 
-const addMarker = async (geocoder, map, address, title) => {
+const addMarker = async (
+  geocoder: google.maps.Geocoder,
+  map: google.maps.Map,
+  address: string,
+  title: string
+) => {
   const response = await geocoder.geocode({ address });
 
   const { AdvancedMarkerElement } = await loader.importLibrary("marker");
@@ -42,15 +51,16 @@ const run = async () => {
   const { Geocoder } = await loader.importLibrary("geocoding");
   const geocoder = new Geocoder();
 
+  const map = await createMap();
+
   const data = await getSheetData();
+
   const headers = data.values[0];
   const titleIndex = headers.indexOf("Name");
   const locIndex = headers.indexOf("Combined");
 
-  const map = await createMap();
-
   const rows = data.values.slice(1);
-  rows.forEach((row) => {
+  rows.forEach((row: [string]) => {
     const title = row[titleIndex];
     const loc = row[locIndex];
     addMarker(geocoder, map, loc, title);
