@@ -8,3 +8,5 @@ Proof of concept.
 npm install
 npm start
 ```
+
+See also: [Bike Bus data](https://doi.org/10.34810/data1394) from [a City Lab Barcelona study](https://citylabbcn.org/the-global-bike-bus-movement/).
