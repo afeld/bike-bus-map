@@ -1,0 +1,15 @@
+{
+  "name": "bike-bus-map",
+  "source": "index.html",
+  "private": true,
+  "scripts": {
+    "start": "parcel",
+    "build": "parcel build"
+  },
+  "devDependencies": {
+    "parcel": "^2.13.3"
+  },
+  "dependencies": {
+    "@googlemaps/js-api-loader": "^1.16.8"
+  }
+}

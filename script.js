@@ -1,11 +1,16 @@
+// https://developers.google.com/maps/documentation/javascript/load-maps-js-api#js-api-loader
+import { Loader } from "@googlemaps/js-api-loader";
+
 const sheetId = "1_BGSepevkTl0xade-TrJISX5Bp6r5tsBDy5_XY2umwc";
 const apiKey = "AIzaSyChiRwOLGsaXitE3ZrgM2qIoPpZm1cBjPs";
 const range = "Sheet1";
 
-const geocoder = new google.maps.Geocoder();
+const loader = new Loader({
+  apiKey,
+});
 
 const createMap = async () => {
-  const { Map } = await google.maps.importLibrary("maps");
+  const { Map } = await loader.importLibrary("maps");
 
   const mapEl = document.getElementById("map");
   return new Map(mapEl, {
@@ -21,10 +26,10 @@ const getSheetData = async () => {
   return await response.json();
 };
 
-const addMarker = async (map, address, title) => {
+const addMarker = async (geocoder, map, address, title) => {
   const response = await geocoder.geocode({ address });
 
-  const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+  const { AdvancedMarkerElement } = await loader.importLibrary("marker");
 
   return new AdvancedMarkerElement({
     map,
@@ -34,6 +39,9 @@ const addMarker = async (map, address, title) => {
 };
 
 const run = async () => {
+  const { Geocoder } = await loader.importLibrary("geocoding");
+  const geocoder = new Geocoder();
+
   const data = await getSheetData();
   const headers = data.values[0];
   const titleIndex = headers.indexOf("Name");
@@ -45,7 +53,7 @@ const run = async () => {
   rows.forEach((row) => {
     const title = row[titleIndex];
     const loc = row[locIndex];
-    addMarker(map, loc, title);
+    addMarker(geocoder, map, loc, title);
   });
 };
 
