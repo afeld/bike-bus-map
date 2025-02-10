@@ -69,26 +69,27 @@ const run = async () => {
   const headers = data.values[0];
   const titleIndex = headers.indexOf("Name");
   const locIndex = headers.indexOf("Combined");
+  const urlIndex = headers.indexOf("URL");
 
   const rows = data.values.slice(1);
   // wait for all markers to be added
-  const markers = await Promise.all(
-    rows.map((row: [string]) => {
-      console.log(row);
+  await Promise.all(
+    rows.map(async (row: [string]) => {
       const title = row[titleIndex];
       const loc = row[locIndex];
-      return addMarker(geocoder, map, bounds, loc, title);
+      const marker = await addMarker(geocoder, map, bounds, loc, title);
+
+      // https://developers.google.com/maps/documentation/javascript/advanced-markers/accessible-markers#make_a_marker_clickable
+      marker.addListener("click", () => {
+        infoWindow.close();
+
+        const url = row[urlIndex];
+        infoWindow.setContent(`<h3>${title}</h3><a href="${url}">${url}</a>`);
+
+        infoWindow.open(marker.map, marker);
+      });
     })
   );
-
-  markers.forEach((marker) => {
-    // https://developers.google.com/maps/documentation/javascript/advanced-markers/accessible-markers#make_a_marker_clickable
-    marker.addListener("click", () => {
-      infoWindow.close();
-      infoWindow.setContent(marker.title);
-      infoWindow.open(marker.map, marker);
-    });
-  });
 
   // automatically center the map
   map.fitBounds(bounds);
