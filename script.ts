@@ -11,7 +11,7 @@ const loader = new Loader({
   apiKey,
 });
 
-const arrayToObj = (headers: [string], row: [string]) => {
+const arrayToObj = (headers: string[], row: string[]) => {
   const result = {};
   headers.forEach((header, i) => {
     result[header] = row[i];
@@ -81,7 +81,7 @@ class BikeBus {
     return this.shortLocation();
   }
 
-  static fromRow(headers: [string], row: [string]) {
+  static fromRow(headers: string[], row: string[]) {
     const rowObj = arrayToObj(headers, row);
 
     return new BikeBus(
@@ -120,7 +120,7 @@ const getSheetData = async () => {
   const response = await fetch(url);
   const data = await response.json();
 
-  const values: [string][] = data.values;
+  const values: string[][] = data.values;
   const headers = values[0];
   const rows = values.slice(1);
   const buses = rows.map((row) => BikeBus.fromRow(headers, row));
