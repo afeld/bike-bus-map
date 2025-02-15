@@ -5,7 +5,7 @@ import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
 const sheetId = "1_BGSepevkTl0xade-TrJISX5Bp6r5tsBDy5_XY2umwc";
 const apiKey = "AIzaSyChiRwOLGsaXitE3ZrgM2qIoPpZm1cBjPs";
-const range = "BB_survey";
+const range = "from Bike Bus World";
 
 const loader = new Loader({
   apiKey,
@@ -20,15 +20,16 @@ const arrayToObj = (headers: string[], row: string[]) => {
 };
 
 // https://stackoverflow.com/a/2843625/358804
-const join = (parts: string[]) => parts.filter(Boolean).join(", ");
+const join = (parts: (string | null)[], separator = ", ") =>
+  parts.filter(Boolean).join(separator);
 
 class BikeBus {
   constructor(
     public name: string,
-    public street: string,
+    public street: string | null,
     public city: string,
     public state: string,
-    public zip: string,
+    public zip: string | null,
     public country: string,
     public lat: number,
     public lng: number,
@@ -58,11 +59,10 @@ class BikeBus {
   }
 
   async geocode(geocoder: google.maps.Geocoder) {
-    // their geocoding isn't reliable
-    // if (this.lat && this.lng) {
-    //   const core = await loader.importLibrary("core");
-    //   return new core.LatLng(this.lat, this.lng);
-    // }
+    if (this.lat && this.lng) {
+      const core = await loader.importLibrary("core");
+      return new core.LatLng(this.lat, this.lng);
+    }
 
     const response = await geocoder.geocode({ address: this.location() });
     return response.results[0].geometry.location;
@@ -83,17 +83,18 @@ class BikeBus {
 
   static fromRow(headers: string[], row: string[]) {
     const rowObj = arrayToObj(headers, row);
+    const name = join([rowObj["School Name"], rowObj["Route Name"]], " - ");
 
     return new BikeBus(
-      rowObj["BB_Name"],
-      rowObj["Street"],
+      name,
+      null,
       rowObj["City"],
       rowObj["State"],
-      rowObj["ZIP"],
+      null,
       rowObj["Country"],
-      parseFloat(rowObj["Latitude"]),
-      parseFloat(rowObj["Longitude"]),
-      rowObj["URL"]
+      parseFloat(rowObj["Lat"]),
+      parseFloat(rowObj["Lon"]),
+      rowObj["Link"]
     );
   }
 }
