@@ -1,13 +1,11 @@
 // https://developers.google.com/maps/documentation/javascript/load-maps-js-api#js-api-loader
 import { Loader } from "@googlemaps/js-api-loader";
-// https://developers.google.com/maps/documentation/javascript/marker-clustering
-import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
 const sheetId = "1_BGSepevkTl0xade-TrJISX5Bp6r5tsBDy5_XY2umwc";
 const apiKey = "AIzaSyChiRwOLGsaXitE3ZrgM2qIoPpZm1cBjPs";
 const range = "from Bike Bus World";
 
-const loader = new Loader({
+export const loader = new Loader({
   apiKey,
 });
 
@@ -99,7 +97,7 @@ class BikeBus {
   }
 }
 
-const createMap = async () => {
+export const createMap = async () => {
   const { Map } = await loader.importLibrary("maps");
 
   const mapEl = document.getElementById("map");
@@ -118,7 +116,7 @@ const createMap = async () => {
   });
 };
 
-const getSheetData = async () => {
+export const getSheetData = async () => {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
   const response = await fetch(url);
   const data = await response.json();
@@ -131,7 +129,7 @@ const getSheetData = async () => {
   return buses;
 };
 
-const addMarker = async (
+export const addMarker = async (
   geocoder: google.maps.Geocoder,
   map: google.maps.Map,
   bounds: google.maps.LatLngBounds,
@@ -164,28 +162,3 @@ const addMarker = async (
 
   return marker;
 };
-
-const run = async () => {
-  const [core, maps, geocoding, map, buses] = await Promise.all([
-    loader.importLibrary("core"),
-    loader.importLibrary("maps"),
-    loader.importLibrary("geocoding"),
-    createMap(),
-    getSheetData(),
-  ]);
-
-  const bounds = new core.LatLngBounds();
-  const infoWindow = new maps.InfoWindow();
-  const geocoder = new geocoding.Geocoder();
-
-  // wait for all markers to be added
-  const markers = await Promise.all(
-    buses.map((bus) => addMarker(geocoder, map, bounds, infoWindow, bus))
-  );
-
-  // automatically center the map
-  map.fitBounds(bounds);
-  new MarkerClusterer({ markers, map });
-};
-
-window.addEventListener("load", run);
