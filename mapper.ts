@@ -1,11 +1,13 @@
 // https://developers.google.com/maps/documentation/javascript/load-maps-js-api#js-api-loader
 import { Loader } from "@googlemaps/js-api-loader";
+// https://developers.google.com/maps/documentation/javascript/marker-clustering
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
 
 const sheetId = "1_BGSepevkTl0xade-TrJISX5Bp6r5tsBDy5_XY2umwc";
 const apiKey = "AIzaSyChiRwOLGsaXitE3ZrgM2qIoPpZm1cBjPs";
 const range = "from Bike Bus World";
 
-export const loader = new Loader({
+const loader = new Loader({
   apiKey,
 });
 
@@ -97,24 +99,71 @@ class BikeBus {
   }
 }
 
-export const createMap = async () => {
-  const { Map } = await loader.importLibrary("maps");
+export class MapperMap {
+  map: google.maps.Map;
+  infoWindow: google.maps.InfoWindow;
+  bounds: google.maps.LatLngBounds;
+  geocoder: google.maps.Geocoder;
+  clusterer: MarkerClusterer;
 
-  const mapEl = document.getElementById("map");
-  if (!mapEl) {
-    throw new Error("Map element not found");
+  constructor() {}
+
+  async setup(el: HTMLElement) {
+    const [core, maps, geocoding] = await Promise.all([
+      loader.importLibrary("core"),
+      loader.importLibrary("maps"),
+      loader.importLibrary("geocoding"),
+    ]);
+
+    this.infoWindow = new maps.InfoWindow();
+    this.geocoder = new geocoding.Geocoder();
+
+    this.map = new maps.Map(el, {
+      center: { lat: 0, lng: 0 },
+      zoom: 2,
+      mapId: "DEMO_MAP_ID",
+      // gestureHandling: "cooperative",
+      maxZoom: 13,
+      streetViewControl: false,
+      mapTypeControl: false,
+    });
   }
 
-  return new Map(mapEl, {
-    center: { lat: 0, lng: 0 },
-    zoom: 2,
-    mapId: "DEMO_MAP_ID",
-    // gestureHandling: "cooperative",
-    maxZoom: 13,
-    streetViewControl: false,
-    mapTypeControl: false,
-  });
-};
+  async addMarker(bus: BikeBus) {
+    const position = await bus.geocode(this.geocoder);
+
+    const { AdvancedMarkerElement } = await loader.importLibrary("marker");
+
+    const map = this.map;
+    const marker = new AdvancedMarkerElement({
+      map,
+      position,
+      title: bus.name,
+      gmpClickable: true,
+    });
+
+    // https://developers.google.com/maps/documentation/javascript/advanced-markers/accessible-markers#make_a_marker_clickable
+    marker.addListener("click", () => {
+      this.infoWindow.close();
+
+      const header = document.createElement("h3");
+      header.textContent = bus.name;
+      this.infoWindow.setHeaderContent(header);
+      this.infoWindow.setContent(bus.toHTML());
+
+      this.infoWindow.open(this.map, marker);
+    });
+
+    this.bounds.extend(position);
+
+    return marker;
+  }
+
+  // automatically center the map
+  recenter() {
+    this.map.fitBounds(this.bounds);
+  }
+}
 
 export const getSheetData = async () => {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
@@ -127,38 +176,4 @@ export const getSheetData = async () => {
   const buses = rows.map((row) => BikeBus.fromRow(headers, row));
 
   return buses;
-};
-
-export const addMarker = async (
-  geocoder: google.maps.Geocoder,
-  map: google.maps.Map,
-  bounds: google.maps.LatLngBounds,
-  infoWindow: google.maps.InfoWindow,
-  bus: BikeBus
-) => {
-  const position = await bus.geocode(geocoder);
-  bounds.extend(position);
-
-  const { AdvancedMarkerElement } = await loader.importLibrary("marker");
-
-  const marker = new AdvancedMarkerElement({
-    map,
-    position,
-    title: bus.name,
-    gmpClickable: true,
-  });
-
-  // https://developers.google.com/maps/documentation/javascript/advanced-markers/accessible-markers#make_a_marker_clickable
-  marker.addListener("click", () => {
-    infoWindow.close();
-
-    const header = document.createElement("h3");
-    header.textContent = bus.name;
-    infoWindow.setHeaderContent(header);
-    infoWindow.setContent(bus.toHTML());
-
-    infoWindow.open(map, marker);
-  });
-
-  return marker;
 };
