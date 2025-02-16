@@ -89,11 +89,11 @@ class BikeBus {
 }
 
 export class MapperMap {
-  map: google.maps.Map;
-  infoWindow: google.maps.InfoWindow;
   bounds: google.maps.LatLngBounds;
-  geocoder: google.maps.Geocoder;
   clusterer: MarkerClusterer;
+  geocoder: google.maps.Geocoder;
+  infoWindow: google.maps.InfoWindow;
+  map: google.maps.Map;
 
   async setup(el: HTMLElement) {
     const [core, maps, geocoding] = await Promise.all([
@@ -102,6 +102,7 @@ export class MapperMap {
       loader.importLibrary("geocoding"),
     ]);
 
+    this.bounds = new core.LatLngBounds();
     this.infoWindow = new maps.InfoWindow();
     this.geocoder = new geocoding.Geocoder();
 
@@ -114,16 +115,17 @@ export class MapperMap {
       streetViewControl: false,
       mapTypeControl: false,
     });
+
+    this.clusterer = new MarkerClusterer({ map: this.map });
   }
 
   async addMarker(bus: BikeBus) {
+    // TODO Promise
     const position = await bus.geocode(this.geocoder);
-
     const { AdvancedMarkerElement } = await loader.importLibrary("marker");
 
-    const map = this.map;
     const marker = new AdvancedMarkerElement({
-      map,
+      map: this.map,
       position,
       title: bus.name,
       gmpClickable: true,
@@ -142,6 +144,7 @@ export class MapperMap {
     });
 
     this.bounds.extend(position);
+    this.clusterer.addMarker(marker);
 
     return marker;
   }
