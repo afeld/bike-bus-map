@@ -120,11 +120,12 @@ export class MapperMap {
   }
 
   async addMarker(bus: BikeBus) {
-    // TODO Promise
-    const position = await bus.geocode(this.geocoder);
-    const { AdvancedMarkerElement } = await loader.importLibrary("marker");
+    const [position, markerLib] = await Promise.all([
+      bus.geocode(this.geocoder),
+      loader.importLibrary("marker"),
+    ]);
 
-    const marker = new AdvancedMarkerElement({
+    const marker = new markerLib.AdvancedMarkerElement({
       map: this.map,
       position,
       title: bus.name,
