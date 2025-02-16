@@ -2,6 +2,7 @@
 import { Loader } from "@googlemaps/js-api-loader";
 // https://developers.google.com/maps/documentation/javascript/marker-clustering
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
+import { arrayToObj, join } from "./utils";
 
 const sheetId = "1_BGSepevkTl0xade-TrJISX5Bp6r5tsBDy5_XY2umwc";
 const apiKey = "AIzaSyChiRwOLGsaXitE3ZrgM2qIoPpZm1cBjPs";
@@ -10,18 +11,6 @@ const range = "from Bike Bus World";
 const loader = new Loader({
   apiKey,
 });
-
-const arrayToObj = (headers: string[], row: string[]) => {
-  const result = {};
-  headers.forEach((header, i) => {
-    result[header] = row[i];
-  });
-  return result;
-};
-
-// https://stackoverflow.com/a/2843625/358804
-const join = (parts: (string | null)[], separator = ", ") =>
-  parts.filter(Boolean).join(separator);
 
 class BikeBus {
   constructor(
@@ -105,8 +94,6 @@ export class MapperMap {
   bounds: google.maps.LatLngBounds;
   geocoder: google.maps.Geocoder;
   clusterer: MarkerClusterer;
-
-  constructor() {}
 
   async setup(el: HTMLElement) {
     const [core, maps, geocoding] = await Promise.all([
